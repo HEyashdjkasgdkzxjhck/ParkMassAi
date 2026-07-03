@@ -5,6 +5,7 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/GameplayStatics.h"
+#include "ParkMassPedestrianAlertSettings.h"
 #include "ParkMassPedestrianCharacter.h"
 #include "ParkMassPedestrianEventPoint.h"
 #include "TimerManager.h"
@@ -66,16 +67,28 @@ bool UParkMassPedestrianAlertSubsystem::TriggerPointAlert(
 	const int32 SpawnCount,
 	const bool bDestroyAfterAlert)
 {
+	return TriggerPointAlertWithAction(PointName, AlertText, Duration, SpawnCount, bDestroyAfterAlert, NAME_None);
+}
+
+bool UParkMassPedestrianAlertSubsystem::TriggerPointAlertWithAction(
+	const FName PointName,
+	const FText& AlertText,
+	const float Duration,
+	const int32 SpawnCount,
+	const bool bDestroyAfterAlert,
+	const FName ActionId)
+{
 	UE_LOG(
 		LogParkMassPedestrianAlertSubsystem,
 		Log,
-		TEXT("TriggerPointAlert Input: Mode=%s PointName=%s AlertText=%s Duration=%.2f SpawnCount=%d bDestroyAfterAlert=%s"),
+		TEXT("TriggerPointAlert Input: Mode=%s PointName=%s AlertText=%s Duration=%.2f SpawnCount=%d bDestroyAfterAlert=%s ActionId=%s"),
 		*AlertSourceModeToString(AlertSourceMode),
 		*PointName.ToString(),
 		*AlertText.ToString(),
 		Duration,
 		SpawnCount,
-		bDestroyAfterAlert ? TEXT("true") : TEXT("false"));
+		bDestroyAfterAlert ? TEXT("true") : TEXT("false"),
+		*ActionId.ToString());
 
 	if (!IsExternalAlertAllowed())
 	{
@@ -138,23 +151,25 @@ bool UParkMassPedestrianAlertSubsystem::TriggerPointAlert(
 	}
 
 	AParkMassPedestrianEventPoint* EventPoint = Matches[0];
-	EventPoint->SpawnAlertPedestrianWithParams(
+	EventPoint->SpawnAlertPedestrianWithActionParams(
 		AlertText,
 		FMath::Max(0.0f, Duration),
 		FMath::Max(1, SpawnCount),
-		bDestroyAfterAlert);
+		bDestroyAfterAlert,
+		ActionId);
 
 	UE_LOG(
 		LogParkMassPedestrianAlertSubsystem,
 		Log,
-		TEXT("TriggerPointAlert Success: PointName=%s EventPoint=%s Location=%s AlertText=%s Duration=%.2f SpawnCount=%d bDestroyAfterAlert=%s"),
+		TEXT("TriggerPointAlert Success: PointName=%s EventPoint=%s Location=%s AlertText=%s Duration=%.2f SpawnCount=%d bDestroyAfterAlert=%s ActionId=%s"),
 		*PointName.ToString(),
 		*GetNameSafe(EventPoint),
 		*EventPoint->GetActorLocation().ToString(),
 		*AlertText.ToString(),
 		Duration,
 		SpawnCount,
-		bDestroyAfterAlert ? TEXT("true") : TEXT("false"));
+		bDestroyAfterAlert ? TEXT("true") : TEXT("false"),
+		*ActionId.ToString());
 	return true;
 }
 
@@ -291,6 +306,26 @@ int32 UParkMassPedestrianAlertSubsystem::ClearAllPedestrianAlerts()
 	return ClearedCount;
 }
 
+TArray<FParkMassPedestrianAlertActionCatalogItem> UParkMassPedestrianAlertSubsystem::GetPedestrianAlertActionCatalog()
+{
+	if (UParkMassPedestrianAlertActionSet* ActionSet = GetDefaultActionSet())
+	{
+		return ActionSet->GetActionCatalog();
+	}
+
+	return {};
+}
+
+TArray<FName> UParkMassPedestrianAlertSubsystem::GetPedestrianAlertActionIds()
+{
+	if (UParkMassPedestrianAlertActionSet* ActionSet = GetDefaultActionSet())
+	{
+		return ActionSet->GetAvailableActionIds();
+	}
+
+	return {};
+}
+
 FString UParkMassPedestrianAlertSubsystem::AlertSourceModeToString(const EPedestrianAlertSourceMode Mode)
 {
 	switch (Mode)
@@ -316,3 +351,54 @@ void UParkMassPedestrianAlertSubsystem::ClearAlert(AParkMassPedestrianCharacter*
 	}
 }
 
+UParkMassPedestrianAlertActionSet* UParkMassPedestrianAlertSubsystem::GetDefaultActionSet()
+{
+	const UParkMassPedestrianAlertSettings* Settings = GetDefault<UParkMassPedestrianAlertSettings>();
+	UE_LOG(
+		LogParkMassPedestrianAlertSubsystem,
+		Log,
+		TEXT("GetDefaultActionSet: SettingsValid=%s"),
+		Settings ? TEXT("true") : TEXT("false"));
+
+	if (!Settings)
+	{
+		UE_LOG(LogParkMassPedestrianAlertSubsystem, Warning, TEXT("GetDefaultActionSet failed: settings object is invalid"));
+		return nullptr;
+	}
+
+	const TSoftObjectPtr<UParkMassPedestrianAlertActionSet>& ConfiguredActionSet = Settings->DefaultAlertActionSet;
+	UE_LOG(
+		LogParkMassPedestrianAlertSubsystem,
+		Log,
+		TEXT("GetDefaultActionSet: DefaultAlertActionSetConfigured=%s Path=%s"),
+		ConfiguredActionSet.IsNull() ? TEXT("false") : TEXT("true"),
+		*ConfiguredActionSet.ToSoftObjectPath().ToString());
+
+	if (ConfiguredActionSet.IsNull())
+	{
+		UE_LOG(
+			LogParkMassPedestrianAlertSubsystem,
+			Warning,
+			TEXT("GetDefaultActionSet failed: Settings.DefaultAlertActionSet is not configured"));
+		return nullptr;
+	}
+
+	UParkMassPedestrianAlertActionSet* LoadedActionSet = ConfiguredActionSet.LoadSynchronous();
+	UE_LOG(
+		LogParkMassPedestrianAlertSubsystem,
+		Log,
+		TEXT("GetDefaultActionSet: LoadSucceeded=%s ActionSet=%s"),
+		LoadedActionSet ? TEXT("true") : TEXT("false"),
+		*GetNameSafe(LoadedActionSet));
+
+	if (!LoadedActionSet)
+	{
+		UE_LOG(
+			LogParkMassPedestrianAlertSubsystem,
+			Warning,
+			TEXT("GetDefaultActionSet failed: could not load Settings.DefaultAlertActionSet Path=%s"),
+			*ConfiguredActionSet.ToSoftObjectPath().ToString());
+	}
+
+	return LoadedActionSet;
+}

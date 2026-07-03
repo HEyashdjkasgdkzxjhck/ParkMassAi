@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
+#include "ParkMassPedestrianAlertActionSet.h"
 #include "ParkMassPedestrianAlertTypes.h"
 #include "ParkMassPedestrianAlertSubsystem.generated.h"
 
 class AParkMassPedestrianCharacter;
+class UParkMassPedestrianAlertActionSet;
 
 UCLASS()
 class PARKMASSAI_API UParkMassPedestrianAlertSubsystem : public UWorldSubsystem
@@ -36,6 +38,9 @@ public:
 	bool TriggerPointAlert(FName PointName, const FText& AlertText, float Duration, int32 SpawnCount, bool bDestroyAfterAlert);
 
 	UFUNCTION(BlueprintCallable, Category = "ParkMassAI|Pedestrian Alerts")
+	bool TriggerPointAlertWithAction(FName PointName, const FText& AlertText, float Duration, int32 SpawnCount, bool bDestroyAfterAlert, FName ActionId);
+
+	UFUNCTION(BlueprintCallable, Category = "ParkMassAI|Pedestrian Alerts")
 	bool TriggerActorAlert(AActor* TargetActor, const FText& AlertText, float Duration);
 
 	UFUNCTION(BlueprintCallable, Category = "ParkMassAI|Pedestrian Alerts")
@@ -44,6 +49,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ParkMassAI|Pedestrian Alerts")
 	int32 ClearAllPedestrianAlerts();
 
+	UFUNCTION(BlueprintCallable, Category = "ParkMassAI|Pedestrian Alert Actions")
+	TArray<FParkMassPedestrianAlertActionCatalogItem> GetPedestrianAlertActionCatalog();
+
+	UFUNCTION(BlueprintCallable, Category = "ParkMassAI|Pedestrian Alert Actions")
+	TArray<FName> GetPedestrianAlertActionIds();
+
 	static FString AlertSourceModeToString(EPedestrianAlertSourceMode Mode);
 
 private:
@@ -51,5 +62,5 @@ private:
 	EPedestrianAlertSourceMode AlertSourceMode = EPedestrianAlertSourceMode::DemoRandom;
 
 	void ClearAlert(AParkMassPedestrianCharacter* Pedestrian);
+	UParkMassPedestrianAlertActionSet* GetDefaultActionSet();
 };
-

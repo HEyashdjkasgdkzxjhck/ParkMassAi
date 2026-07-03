@@ -166,6 +166,7 @@ void AParkMassPedestrianEventPoint::SpawnPedestrians()
 
 void AParkMassPedestrianEventPoint::SpawnAlertPedestrian()
 {
+	PendingActionId = NAME_None;
 	SpawnPedestriansInternal(true);
 }
 
@@ -174,6 +175,21 @@ void AParkMassPedestrianEventPoint::SpawnAlertPedestrianWithParams(
 	const float InDuration,
 	const int32 InSpawnCount,
 	const bool bInDestroyAfterAlert)
+{
+	SpawnAlertPedestrianWithActionParams(
+		InAlertText,
+		InDuration,
+		InSpawnCount,
+		bInDestroyAfterAlert,
+		NAME_None);
+}
+
+void AParkMassPedestrianEventPoint::SpawnAlertPedestrianWithActionParams(
+	const FText InAlertText,
+	const float InDuration,
+	const int32 InSpawnCount,
+	const bool bInDestroyAfterAlert,
+	const FName ActionId)
 {
 	const FText PreviousAlertText = AlertText;
 	const float PreviousAlertDuration = AlertDuration;
@@ -184,8 +200,9 @@ void AParkMassPedestrianEventPoint::SpawnAlertPedestrianWithParams(
 	AlertDuration = FMath::Max(0.0f, InDuration);
 	SpawnCount = FMath::Max(1, InSpawnCount);
 	bDestroyAfterAlert = bInDestroyAfterAlert;
+	PendingActionId = ActionId;
 
-	SpawnAlertPedestrian();
+	SpawnPedestriansInternal(true);
 
 	AlertText = PreviousAlertText;
 	AlertDuration = PreviousAlertDuration;
@@ -372,6 +389,10 @@ void AParkMassPedestrianEventPoint::ResolveRecentlySpawnedPedestrians(const bool
 		if (bSetAlert)
 		{
 			Pedestrian->SetAlertState(true);
+			if (!PendingActionId.IsNone())
+			{
+				Pedestrian->PlayAlertAction(PendingActionId);
+			}
 		}
 
 		UE_LOG(
@@ -503,5 +524,5 @@ UMassEntityConfigAsset* AParkMassPedestrianEventPoint::GetEffectiveEntityConfig(
 
 	return LoadObject<UMassEntityConfigAsset>(
 		nullptr,
-		TEXT("/ParkMassAI/Content/Mass/Entity/DA_Mass_Pedestrian_Wander.DA_Mass_Pedestrian_Wander"));
+		TEXT("/ParkMassAI/MassAI/Mass/Entity/DA_Mass_Pedestrian_Wander.DA_Mass_Pedestrian_Wander"));
 }

@@ -34,6 +34,9 @@ public:
 	void SpawnAlertPedestrianWithParams(FText InAlertText, float InDuration, int32 InSpawnCount, bool bInDestroyAfterAlert);
 
 	UFUNCTION(BlueprintCallable, Category = "ParkMassAI|Pedestrian Events")
+	void SpawnAlertPedestrianWithActionParams(FText InAlertText, float InDuration, int32 InSpawnCount, bool bInDestroyAfterAlert, FName ActionId);
+
+	UFUNCTION(BlueprintCallable, Category = "ParkMassAI|Pedestrian Events")
 	void SetOwnedPedestriansAlert(bool bAlert);
 
 	UFUNCTION(BlueprintCallable, Category = "ParkMassAI|Pedestrian Events")
@@ -101,6 +104,7 @@ private:
 	FText PendingAlertText;
 	float PendingAlertDuration = 0.0f;
 	bool bPendingDestroyAfterAlert = false;
+	FName PendingActionId = NAME_None;
 	float PendingDestroyDelayAfterAlertEnd = 0.2f;
 	int32 PendingExpectedSpawnCount = 0;
 	int32 PendingOwnedStartCount = 0;

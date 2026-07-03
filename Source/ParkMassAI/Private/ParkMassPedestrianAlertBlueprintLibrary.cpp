@@ -91,6 +91,34 @@ bool UParkMassPedestrianAlertBlueprintLibrary::ParkMass_TriggerPointAlert(
 	return false;
 }
 
+bool UParkMassPedestrianAlertBlueprintLibrary::ParkMass_TriggerPointAlertWithAction(
+	const UObject* WorldContextObject,
+	const FName PointName,
+	const FText AlertText,
+	const float Duration,
+	const int32 SpawnCount,
+	const bool bDestroyAfterAlert,
+	const FName ActionId)
+{
+	UE_LOG(
+		LogParkMassPedestrianAlertBlueprintLibrary,
+		Log,
+		TEXT("ParkMass_TriggerPointAlertWithAction: PointName=%s AlertText=%s Duration=%.2f SpawnCount=%d bDestroyAfterAlert=%s ActionId=%s"),
+		*PointName.ToString(),
+		*AlertText.ToString(),
+		Duration,
+		SpawnCount,
+		bDestroyAfterAlert ? TEXT("true") : TEXT("false"),
+		*ActionId.ToString());
+
+	if (UParkMassPedestrianAlertSubsystem* Subsystem = GetAlertSubsystem(WorldContextObject))
+	{
+		return Subsystem->TriggerPointAlertWithAction(PointName, AlertText, Duration, SpawnCount, bDestroyAfterAlert, ActionId);
+	}
+
+	return false;
+}
+
 bool UParkMassPedestrianAlertBlueprintLibrary::ParkMass_TriggerActorAlert(
 	const UObject* WorldContextObject,
 	AActor* TargetActor,
@@ -128,3 +156,24 @@ int32 UParkMassPedestrianAlertBlueprintLibrary::ParkMass_ClearAllPedestrianAlert
 	return 0;
 }
 
+TArray<FParkMassPedestrianAlertActionCatalogItem> UParkMassPedestrianAlertBlueprintLibrary::ParkMass_GetPedestrianAlertActionCatalog(
+	const UObject* WorldContextObject)
+{
+	if (UParkMassPedestrianAlertSubsystem* Subsystem = GetAlertSubsystem(WorldContextObject))
+	{
+		return Subsystem->GetPedestrianAlertActionCatalog();
+	}
+
+	return {};
+}
+
+TArray<FName> UParkMassPedestrianAlertBlueprintLibrary::ParkMass_GetPedestrianAlertActionIds(
+	const UObject* WorldContextObject)
+{
+	if (UParkMassPedestrianAlertSubsystem* Subsystem = GetAlertSubsystem(WorldContextObject))
+	{
+		return Subsystem->GetPedestrianAlertActionIds();
+	}
+
+	return {};
+}

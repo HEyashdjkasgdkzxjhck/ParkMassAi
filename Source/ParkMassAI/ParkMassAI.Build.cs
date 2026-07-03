@@ -26,6 +26,9 @@ public class ParkMassAI : ModuleRules
 			new string[]
 			{
 				"Core",
+				"Engine",
+				"DeveloperSettings",
+				"MassEntity",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -35,10 +38,8 @@ public class ParkMassAI : ModuleRules
 			new string[]
 			{
 				"CoreUObject",
-				"Engine",
 				"MassActors",
 				"MassCommon",
-				"MassEntity",
 				"MassMovement",
 				"MassSpawner",
 				"Slate",

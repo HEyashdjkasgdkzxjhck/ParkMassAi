@@ -9,6 +9,8 @@
 class UTextBlock;
 class UUserWidget;
 class UWidgetComponent;
+class UAnimMontage;
+class UParkMassPedestrianAlertActionSet;
 
 UCLASS(Blueprintable)
 class PARKMASSAI_API AParkMassPedestrianCharacter : public ACharacter
@@ -27,6 +29,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "ParkMassAI|Pedestrian")
 	bool IsAlert() const { return bIsAlert; }
 
+	UFUNCTION(BlueprintCallable, Category = "ParkMassAI|Pedestrian")
+	bool PlayAlertAction(FName ActionId);
+
+	UFUNCTION(BlueprintCallable, Category = "ParkMassAI|Pedestrian")
+	void StopAlertAction();
+
+	UFUNCTION(BlueprintPure, Category = "ParkMassAI|Pedestrian")
+	FName GetCurrentAlertActionId() const { return CurrentAlertActionId; }
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -42,6 +53,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ParkMassAI|Pedestrian")
 	TSubclassOf<UUserWidget> AlertTagWidgetClass;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ParkMassAI|Pedestrian Alert Actions")
+	TObjectPtr<UParkMassPedestrianAlertActionSet> AlertActionSet = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ParkMassAI|Pedestrian Alert Actions")
+	FName CurrentAlertActionId = NAME_None;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ParkMassAI|Pedestrian Alert Actions")
+	TObjectPtr<UAnimMontage> CurrentAlertMontage = nullptr;
+
 	void ApplyAlertVisuals();
 	void UpdateAlertWidgetText();
+	UParkMassPedestrianAlertActionSet* GetEffectiveAlertActionSet();
 };
