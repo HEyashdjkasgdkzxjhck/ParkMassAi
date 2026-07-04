@@ -7,6 +7,7 @@
 #include "ParkMassPedestrianAlertSettings.generated.h"
 
 class UParkMassPedestrianAlertActionSet;
+class UMassEntityConfigAsset;
 
 UCLASS(config = ParkMassAI, defaultconfig, meta = (DisplayName = "ParkMassAI Pedestrian Alert"))
 class PARKMASSAI_API UParkMassPedestrianAlertSettings : public UDeveloperSettings
@@ -19,4 +20,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Config, Category = "Pedestrian Alert Actions", meta = (AllowedClasses = "/Script/ParkMassAI.ParkMassPedestrianAlertActionSet"))
 	TSoftObjectPtr<UParkMassPedestrianAlertActionSet> DefaultAlertActionSet;
+
+	UPROPERTY(EditAnywhere, Config, Category = "Pedestrian Mass", meta = (AllowedClasses = "/Script/MassSpawner.MassEntityConfigAsset"))
+	TSoftObjectPtr<UMassEntityConfigAsset> DefaultPedestrianEntityConfig;
 };

@@ -10,6 +10,7 @@
 #include "MassSpawnLocationProcessor.h"
 #include "MassSpawnerSubsystem.h"
 #include "MassSpawnerTypes.h"
+#include "ParkMassPedestrianAlertSettings.h"
 #include "ParkMassPedestrianCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "StructUtils/StructView.h"
@@ -519,10 +520,62 @@ UMassEntityConfigAsset* AParkMassPedestrianEventPoint::GetEffectiveEntityConfig(
 {
 	if (EntityConfig)
 	{
+		UE_LOG(
+			LogParkMassPedestrianEventPoint,
+			Log,
+			TEXT("GetEffectiveEntityConfig: Using EventPoint override EntityConfig. Point=%s EntityConfig=%s"),
+			*GetNameSafe(this),
+			*GetNameSafe(EntityConfig));
 		return EntityConfig;
 	}
 
-	return LoadObject<UMassEntityConfigAsset>(
-		nullptr,
-		TEXT("/ParkMassAI/MassAI/Mass/Entity/DA_Mass_Pedestrian_Wander.DA_Mass_Pedestrian_Wander"));
+	const UParkMassPedestrianAlertSettings* Settings = GetDefault<UParkMassPedestrianAlertSettings>();
+	UE_LOG(
+		LogParkMassPedestrianEventPoint,
+		Log,
+		TEXT("GetEffectiveEntityConfig: EventPoint override empty. SettingsValid=%s Point=%s"),
+		Settings ? TEXT("true") : TEXT("false"),
+		*GetNameSafe(this));
+
+	if (!Settings)
+	{
+		UE_LOG(LogParkMassPedestrianEventPoint, Warning, TEXT("GetEffectiveEntityConfig failed: settings object is invalid. Point=%s"), *GetNameSafe(this));
+		return nullptr;
+	}
+
+	const TSoftObjectPtr<UMassEntityConfigAsset>& ConfiguredEntityConfig = Settings->DefaultPedestrianEntityConfig;
+	UE_LOG(
+		LogParkMassPedestrianEventPoint,
+		Log,
+		TEXT("GetEffectiveEntityConfig: Using settings DefaultPedestrianEntityConfig. Configured=%s Path=%s Point=%s"),
+		ConfiguredEntityConfig.IsNull() ? TEXT("false") : TEXT("true"),
+		*ConfiguredEntityConfig.ToSoftObjectPath().ToString(),
+		*GetNameSafe(this));
+
+	if (ConfiguredEntityConfig.IsNull())
+	{
+		UE_LOG(LogParkMassPedestrianEventPoint, Warning, TEXT("GetEffectiveEntityConfig failed: Settings.DefaultPedestrianEntityConfig is not configured. Point=%s"), *GetNameSafe(this));
+		return nullptr;
+	}
+
+	UMassEntityConfigAsset* LoadedEntityConfig = ConfiguredEntityConfig.LoadSynchronous();
+	UE_LOG(
+		LogParkMassPedestrianEventPoint,
+		Log,
+		TEXT("GetEffectiveEntityConfig: Settings LoadSucceeded=%s EntityConfig=%s Point=%s"),
+		LoadedEntityConfig ? TEXT("true") : TEXT("false"),
+		*GetNameSafe(LoadedEntityConfig),
+		*GetNameSafe(this));
+
+	if (!LoadedEntityConfig)
+	{
+		UE_LOG(
+			LogParkMassPedestrianEventPoint,
+			Warning,
+			TEXT("GetEffectiveEntityConfig failed: could not load Settings.DefaultPedestrianEntityConfig Path=%s Point=%s"),
+			*ConfiguredEntityConfig.ToSoftObjectPath().ToString(),
+			*GetNameSafe(this));
+	}
+
+	return LoadedEntityConfig;
 }
